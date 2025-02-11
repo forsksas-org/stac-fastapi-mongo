@@ -10,29 +10,32 @@ from stac_fastapi.types.config import ApiSettings
 
 
 def _mongodb_config() -> Dict[str, Any]:
-    # MongoDB connection URI and client options
-    user = os.getenv("MONGO_USER")
-    password = os.getenv("MONGO_PASS")
-    host = os.getenv("MONGO_HOST", "localhost")
-    port = os.getenv("MONGO_PORT", "27017")
-    # database = os.getenv("MONGO_DB", "stac")  # Default to 'stac' database
-    use_ssl = os.getenv("MONGO_USE_SSL", "false").lower() == "true"
-    verify_certs = os.getenv("MONGO_VERIFY_CERTS", "true").lower() == "true"
+    uri = os.getenv("MONGO_CONNECTION_STRING")
+    if not uri:
+        # MongoDB connection URI and client options
+        scheme = os.getenv("MONGO_SCHEME", "mongodb")
+        user = os.getenv("MONGO_USER")
+        password = os.getenv("MONGO_PASS")
+        host = os.getenv("MONGO_HOST", "localhost")
+        port = os.getenv("MONGO_PORT", "27017")
+        # database = os.getenv("MONGO_DB", "stac")  # Default to 'stac' database
+        use_ssl = os.getenv("MONGO_USE_SSL", "false").lower() == "true"
+        verify_certs = os.getenv("MONGO_VERIFY_CERTS", "true").lower() == "true"
 
-    ssl_cert_reqs = ssl.CERT_REQUIRED if verify_certs else ssl.CERT_NONE
+        ssl_cert_reqs = ssl.CERT_REQUIRED if verify_certs else ssl.CERT_NONE
 
-    # Adjust URI based on whether using SRV record or not
-    if "mongodb+srv" in os.getenv("MONGO_CONNECTION_STRING", ""):
-        uri = "mongodb+srv://{}:{}@{}?retryWrites=true&w=majority".format(
-            user, password, host
-        )
-    else:
-        uri = "mongodb://{}:{}@{}:{}?retryWrites=true".format(
-            user, password, host, port
-        )
+        # Adjust URI based on whether using SRV record or not
+        if "mongodb+srv" in scheme:
+            uri = "mongodb+srv://{}:{}@{}?retryWrites=true&w=majority".format(
+                user, password, host
+            )
+        else:
+            uri = "mongodb://{}:{}@{}:{}?retryWrites=true".format(
+                user, password, host, port
+            )
 
-    if use_ssl:
-        uri += "&ssl=true&ssl_cert_reqs={}".format(ssl_cert_reqs)
+        if use_ssl:
+            uri += "&ssl=true&ssl_cert_reqs={}".format(ssl_cert_reqs)
 
     # Initialize the configuration dictionary
     config = {
