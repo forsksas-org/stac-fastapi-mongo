@@ -10,9 +10,16 @@ ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 
 WORKDIR /app
 
-COPY . /app
+COPY stac_fastapi/mongo /app/stac_fastapi/mongo
+COPY LICENSE /app/
+COPY README.md /app/
 
-RUN pip install --no-cache-dir .[server]
+RUN --mount=type=bind,source=setup.py,target=setup.py \
+    pip install --upgrade pip && \
+    pip install --no-cache-dir .[server] && \
+    pip uninstall -y wheel && \
+    rm -r build && \
+    rm -r stac_fastapi_mongo.egg-info 
 
 EXPOSE 8080
 
